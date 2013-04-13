@@ -87,9 +87,9 @@ OculusWorldDemoApp::OculusWorldDemoApp()
 	
 	FoundHydra = false;
 	HydraX = HydraY = HydraZ = 0;
-	BaseHydraX = 235.23138f;//165.23138f;
-	BaseHydraY = 793.39111f;
-	BaseHydraZ = 337.62234f;
+	BaseHydraX = 0;//235.23138f;//165.23138f;
+	BaseHydraY = 0;//793.39111f;
+	BaseHydraZ = 0;//337.62234f;
 }
 
 OculusWorldDemoApp::~OculusWorldDemoApp()
