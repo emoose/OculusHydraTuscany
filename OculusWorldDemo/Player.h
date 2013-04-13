@@ -57,6 +57,7 @@ class Player
 public:
 	// Position and look. The following apply:
     Vector3f            EyePos;
+	Vector3f			AdjustedEyePos;
 	float				EyeHeight;
     float               EyeYaw;         // Rotation around Y, CCW positive when looking at RHS (X,Z) plane.
     float               EyePitch;       // Pitch. If sensor is plugged in, only read from sensor.

@@ -24,6 +24,36 @@ limitations under the License.
 
 #include "OculusWorldDemo.h"
 
+#define HYDRA_INIT_WAIT 5
+#define HYDRA_DEAD_ZONE 5
+
+const char * HydraTextString = 0;
+bool HydraSetupFinished = false;
+
+float HydraControlRotation[4];
+float BaseHydraRotation[4];
+
+// This is the callback that gets registered with the sixenseUtils::controller_manager. It will get called each time the user completes
+// one of the setup steps so that the game can update the instructions to the user. If the engine supports texture mapping, the 
+// controller_manager can prove a pathname to a image file that contains the instructions in graphic form.
+// The controller_manager serves the following functions:
+//  1) Makes sure the appropriate number of controllers are connected to the system. The number of required controllers is designaged by the
+//     game type (ie two player two controller game requires 4 controllers, one player one controller game requires one)
+//  2) Makes the player designate which controllers are held in which hand.
+//  3) Enables hemisphere tracking by calling the Sixense API call sixenseAutoEnableHemisphereTracking. After this is completed full 360 degree
+//     tracking is possible.
+void SixenseCallBack( sixenseUtils::ControllerManager::setup_step step )
+{
+	if( sixenseUtils::getTheControllerManager()->isMenuVisible() )
+	{
+		HydraSetupFinished = false;
+		HydraTextString = sixenseUtils::getTheControllerManager()->getStepString();
+		HydraTextString = HydraTextString;
+	}
+	else
+		HydraSetupFinished = true;
+}
+
 //-------------------------------------------------------------------------------------
 
 OculusWorldDemoApp::OculusWorldDemoApp()
@@ -54,12 +84,17 @@ OculusWorldDemoApp::OculusWorldDemoApp()
     CurrentLODFileIndex = 0;
 
     AdjustMessageTimeout = 0;
+	
+	FoundHydra = false;
+	HydraX = HydraY = HydraZ = 0;
+	BaseHydraX = 235.23138f;//165.23138f;
+	BaseHydraY = 793.39111f;
+	BaseHydraZ = 337.62234f;
 }
 
 OculusWorldDemoApp::~OculusWorldDemoApp()
 {
     RemoveHandlerFromDevices();
-
     if(DejaVu.fill)
     {
         DejaVu.fill->Release();
@@ -68,10 +103,34 @@ OculusWorldDemoApp::~OculusWorldDemoApp()
     pHMD.Clear();
 	CollisionModels.ClearAndRelease();
 	GroundCollisionModels.ClearAndRelease();
+	sixenseExit();
 }
 
 int OculusWorldDemoApp::OnStartup(int argc, const char** argv)
 {
+	// *** Razer Hydra init
+
+	int base = 0;
+	sixenseAllControllerData acd;
+
+	int ret = sixenseInit();
+
+	// Init the controller manager. This makes sure the controllers are present, assigned to left and right hands, and that
+	// the hemisphere calibration is complete.
+	sixenseUtils::getTheControllerManager()->setGameType( sixenseUtils::ControllerManager::ONE_PLAYER_TWO_CONTROLLER );
+	sixenseUtils::getTheControllerManager()->registerSetupCallback( SixenseCallBack );
+
+	sixenseSetActiveBase(0);
+	sixenseGetAllNewestData( &acd );
+	sixenseUtils::getTheControllerManager()->update( &acd );
+
+	bool found = false;
+	double time = pPlatform->GetAppTime();
+	double time2 = time;
+	while((time2 = pPlatform->GetAppTime()) - time < HYDRA_INIT_WAIT && !FoundHydra)
+		for( base=0; base<sixenseGetMaxBases(); base++ )
+			if(FoundHydra = sixenseIsBaseConnected(base))
+				break;
 
     // *** Oculus HMD & Sensor Initialization
 
@@ -114,24 +173,20 @@ int OculusWorldDemoApp::OnStartup(int argc, const char** argv)
         LatencyUtil.SetDevice(pLatencyTester);
     }
     // Make the user aware which devices are present.
-    if(pHMD == NULL && pSensor == NULL)
-    {
-        SetAdjustMessage("---------------------------------\nNO HMD DETECTED\nNO SENSOR DETECTED\n---------------------------------");
-    }
-    else if(pHMD == NULL)
-    {
-        SetAdjustMessage("----------------------------\nNO HMD DETECTED\n----------------------------");
-    }
-    else if(pSensor == NULL)
-    {
-        SetAdjustMessage("---------------------------------\nNO SENSOR DETECTED\n---------------------------------");
-    }
-    else
-    {
-        SetAdjustMessage("--------------------------------------------\n"
-                         "Press F9 for Full-Screen on Rift\n"
-                         "--------------------------------------------");
-    }
+	char devbuf[4096];
+	memset(devbuf, 0, 4096);
+	strcat(devbuf, "---------------------------------\n");
+	if(pHMD == NULL)
+		strcat(devbuf, "NO HMD DETECTED\n");
+	if(pSensor == NULL)
+		strcat(devbuf, "NO SENSOR DETECTED\n");
+	if(!FoundHydra)
+		strcat(devbuf, "NO HYDRA DETECTED\n");
+	if(pHMD && pSensor)
+		strcat(devbuf, "Press F9 for Full-Screen on Rift\n");
+	
+	strcat(devbuf, "---------------------------------\n");
+	SetAdjustMessage(devbuf);
 
     // First message should be extra-long.
     SetAdjustMessageTimeout(10.0f);
@@ -144,9 +199,7 @@ int OculusWorldDemoApp::OnStartup(int argc, const char** argv)
     }
 
     if(!pPlatform->SetupWindow(Width, Height))
-    {
         return 1;
-    }
 
     String Title = "Oculus World Demo";
     if(HMDInfo.ProductName[0])
@@ -178,13 +231,9 @@ int OculusWorldDemoApp::OnStartup(int argc, const char** argv)
     for(int i = 1; i < argc; i++)
     {
         if(!strcmp(argv[i], "-r") && i < argc - 1)
-        {
             graphics = argv[i + 1];
-        }
         else if(!strcmp(argv[i], "-fs"))
-        {
             RenderParams.Fullscreen = true;
-        }
     }
 
     // Enable multi-sampling by default.
@@ -204,12 +253,10 @@ int OculusWorldDemoApp::OnStartup(int argc, const char** argv)
     // invisible screen on the top (saves on rendering cost).
     // For smaller screens (5.5"), fit to the top.
     if (HMDInfo.HScreenSize > 0.0f)
-    {
         if (HMDInfo.HScreenSize > 0.140f)  // 7"
             SConfig.SetDistortionFitPointVP(-1.0f, 0.0f);        
         else        
-            SConfig.SetDistortionFitPointVP(0.0f, 1.0f);        
-    }
+            SConfig.SetDistortionFitPointVP(0.0f, 1.0f);
 
     pRender->SetSceneRenderScale(SConfig.GetDistortionScale());
     //pRender->SetSceneRenderScale(0.8f);
@@ -248,7 +295,6 @@ int OculusWorldDemoApp::OnStartup(int argc, const char** argv)
     PopulatePreloadScene();
 
     LastUpdate = pPlatform->GetAppTime();
-	//pPlatform->PlayMusicFile(L"Loop.wav");
 
     return 0;
 }
@@ -656,13 +702,29 @@ void OculusWorldDemoApp::OnIdle()
     double curtime = pPlatform->GetAppTime();
     float  dt      = float(curtime - LastUpdate);
     LastUpdate     = curtime;
+	sixenseAllControllerData acd;
+	if(FoundHydra)
+	{
+		sixenseSetActiveBase(0);
+		sixenseAllControllerData acd;
+		sixenseGetAllNewestData( &acd );
+		sixenseUtils::getTheControllerManager()->update( &acd );
+	}
 
     if (LoadingState == LoadingState_DoLoad)
     {
         PopulateScene(MainFilePath.ToCStr());
-        LoadingState = LoadingState_Finished;
+		if(FoundHydra)
+			LoadingState = LoadingState_InitHydra;
+		else
+			LoadingState = LoadingState_Finished;
         return;
     }
+
+	if(LoadingState == LoadingState_InitHydra && HydraSetupFinished)
+	{
+		LoadingState = LoadingState_Finished;
+	}
 
     // If one of Stereo setting adjustment keys is pressed, adjust related state.
     if (pAdjustFunc)
@@ -744,20 +806,103 @@ void OculusWorldDemoApp::OnIdle()
         }
     }
 
+	// Sixense stuff
+	int left_index = sixenseUtils::getTheControllerManager()->getIndex( sixenseUtils::ControllerManager::P1L );
+	int right_index = sixenseUtils::getTheControllerManager()->getIndex( sixenseUtils::ControllerManager::P1R );
+
+	int base = 0;
+	int cont =0;
+	for( base=0; base<sixenseGetMaxBases(); base++ )
+	{
+		sixenseSetActiveBase(base);
+
+		// Get the latest controller data
+		sixenseGetAllNewestData( &acd );
+
+		if(right_index > -1 && sixenseIsControllerEnabled( right_index ))
+		{
+			sixenseControllerData* data = &acd.controllers[right_index];
+			OVR::Platform::GamepadState pad;
+			if(!data->is_docked && !(data->buttons & SIXENSE_BUTTON_1))
+			{
+				pad.Buttons = data->buttons;
+				pad.RT = data->trigger;
+				pad.LY = data->joystick_y;
+				pad.LX = data->joystick_x;
+
+				/*moves camera based on right hydra rotation, buggy and stuff
+				float rot[4];
+				rot[0] = data->rot_quat[0];
+				rot[1] = data->rot_quat[1];
+				rot[2] = data->rot_quat[2];
+				rot[3] = data->rot_quat[3];
+
+				if(data->buttons & SIXENSE_BUTTON_START)
+				{
+					BaseHydraRotation[0] = rot[0];
+					BaseHydraRotation[1] = rot[1];
+					BaseHydraRotation[2] = rot[2];
+					BaseHydraRotation[3] = rot[3];
+				}
+
+				rot[0] -= BaseHydraRotation[0];
+				rot[1] -= BaseHydraRotation[1];
+				rot[2] -= BaseHydraRotation[2];
+				rot[3] -= BaseHydraRotation[3];
+
+				pad.RY = -rot[3];// - BaseHydraRotation[3]);
+				pad.RX = -rot[2];//((data->rot_quat[2] > 0 ? 0 - data->rot_quat[2] : data->rot_quat[2]) - BaseHydraRotation[2]);
+				
+				HydraControlRotation[0] = data->rot_quat[0];
+				HydraControlRotation[1] = data->rot_quat[1];
+				HydraControlRotation[2] = data->rot_quat[2];
+				HydraControlRotation[3] = data->rot_quat[3];*/
+			}
+			OnGamepad(pad);
+		}
+		if(left_index > -1 && sixenseIsControllerEnabled( left_index ))
+		{
+			HydraX = acd.controllers[cont].pos[0];
+			HydraY = acd.controllers[cont].pos[1];
+			HydraZ = acd.controllers[cont].pos[2];
+
+			if(acd.controllers[cont].buttons & SIXENSE_BUTTON_START)
+			{
+				BaseHydraX = HydraX;
+				BaseHydraY = HydraY;
+				BaseHydraZ = HydraZ;
+			}
+
+			HydraX = (int)(HydraX - BaseHydraX);
+			HydraY = (int)(HydraY - BaseHydraY);
+			HydraZ = (int)(HydraZ - BaseHydraZ);
+
+			if(HydraX < HYDRA_DEAD_ZONE && HydraX > -HYDRA_DEAD_ZONE) HydraX = 0;
+			if(HydraY < HYDRA_DEAD_ZONE && HydraY > -HYDRA_DEAD_ZONE) HydraY = 0;
+			if(HydraZ < HYDRA_DEAD_ZONE && HydraZ > -HYDRA_DEAD_ZONE) HydraZ = 0;
+		}
+	}
     // Rotate and position View Camera, using YawPitchRoll in BodyFrame coordinates.
     //
     Matrix4f rollPitchYaw = Matrix4f::RotationY(Player.EyeYaw) * Matrix4f::RotationX(Player.EyePitch) *
                             Matrix4f::RotationZ(Player.EyeRoll);
     Vector3f up      = rollPitchYaw.Transform(UpVector);
     Vector3f forward = rollPitchYaw.Transform(ForwardVector);
-
+	Vector3f right = rollPitchYaw.Transform(RightVector);
 
     // Minimal head modeling; should be moved as an option to SensorFusion.
     float headBaseToEyeHeight     = 0.15f;  // Vertical height of eye from base of head
     float headBaseToEyeProtrusion = 0.09f;  // Distance forward of eye from base of head
 
     Vector3f eyeCenterInHeadFrame(0.0f, headBaseToEyeHeight, -headBaseToEyeProtrusion);
-    Vector3f shiftedEyePos = Player.EyePos + rollPitchYaw.Transform(eyeCenterInHeadFrame);
+    
+	Player.AdjustedEyePos = forward * -((HydraZ/1000.f) * 2);
+	Player.AdjustedEyePos.y = 0;
+	Player.AdjustedEyePos += Player.EyePos;
+	Player.AdjustedEyePos += UpVector * (HydraY/1000.f);
+	Player.AdjustedEyePos += right * ((HydraX/1000.f)*2);
+	
+	Vector3f shiftedEyePos = Player.AdjustedEyePos + rollPitchYaw.Transform(eyeCenterInHeadFrame);
     shiftedEyePos.y -= eyeCenterInHeadFrame.y; // Bring the head back down to original height
     View = Matrix4f::LookAtRH(shiftedEyePos, shiftedEyePos + forward, up);
 
@@ -864,13 +1009,19 @@ void OculusWorldDemoApp::Render(const StereoEyeParams& stereo)
     }
 
     // Display Loading screen-shot in frame 0.
-    if (LoadingState != LoadingState_Finished)
+    if (LoadingState != LoadingState_Finished && LoadingState != LoadingState_InitHydra)
     {
         LoadingScene.Render(pRender, Matrix4f());
         String loadMessage = String("Loading ") + MainFilePath;
         DrawTextBox(pRender, 0, 0.25f, textHeight, loadMessage.ToCStr(), DrawText_HCenter);
         LoadingState = LoadingState_DoLoad;
     }
+
+	if(LoadingState == LoadingState_InitHydra)
+	{
+		DrawTextBox(pRender, 0, 1, textHeight, HydraTextString, DrawText_HCenter);
+		//return;
+	}
 
     if(AdjustMessageTimeout > pPlatform->GetAppTime())
     {
@@ -886,9 +1037,15 @@ void OculusWorldDemoApp::Render(const StereoEyeParams& stereo)
         OVR_sprintf(buf, sizeof(buf),
                     " Yaw:%4.0f  Pitch:%4.0f  Roll:%4.0f \n"
                     " FPS: %d  Frame: %d \n Pos: %3.2f, %3.2f, %3.2f \n"
+					" HX: %3.2f, %3.2f, %3.2f \n"
+					" RX: %3.2f, %3.2f, %3.2f, %3.2f \n"
                     " GPU Tex: %u MB \n EyeHeight: %3.2f",
                     RadToDegree(Player.EyeYaw), RadToDegree(Player.EyePitch), RadToDegree(Player.EyeRoll),
-                    FPS, FrameCounter, Player.EyePos.x, Player.EyePos.y, Player.EyePos.z, texMemInMB, Player.EyePos.y);
+                    FPS, FrameCounter, Player.EyePos.x, Player.EyePos.y, Player.EyePos.z, 
+					(HydraX/1000.f), (HydraY/1000.f), (HydraZ/1000.f), 
+					HydraControlRotation[0], HydraControlRotation[1], HydraControlRotation[2], HydraControlRotation[3],
+					
+					texMemInMB, Player.AdjustedEyePos.y);
             DrawTextBox(pRender, 0, 0.05f, textHeight, buf, DrawText_HCenter);
     }
     break;

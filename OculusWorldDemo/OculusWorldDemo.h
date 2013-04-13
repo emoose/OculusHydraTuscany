@@ -10,6 +10,16 @@
 
 #include <Kernel/OVR_SysFile.h>
 
+#include <sixense.h>
+#include <sixense_math.hpp>
+#ifdef WIN32
+#include <sixense_utils/mouse_pointer.hpp>
+#endif
+#include <sixense_utils/derivatives.hpp>
+#include <sixense_utils/button_states.hpp>
+#include <sixense_utils/event_triggers.hpp>
+#include <sixense_utils/controller_manager/controller_manager.hpp>
+
 // Filename to be loaded by default, searching specified paths.
 #define WORLDDEMO_ASSET_FILE  "Tuscany.xml"
 #define WORLDDEMO_ASSET_PATH1 "Assets/Tuscany/"
@@ -131,6 +141,7 @@ protected:
     {
         LoadingState_Frame0,
         LoadingState_DoLoad,
+		LoadingState_InitHydra,
         LoadingState_Finished
     };
 
@@ -158,6 +169,14 @@ protected:
     float               DistortionK1;
     float               DistortionK2;
     float               DistortionK3;
+
+	bool FoundHydra;
+	float HydraX;
+	float HydraY;
+	float HydraZ;
+	float BaseHydraX;
+	float BaseHydraY;
+	float BaseHydraZ;
 
     String              AdjustMessage;
     double              AdjustMessageTimeout;
