@@ -73,5 +73,6 @@
     <ClInclude Include="..\CommonSrc\Render\Render_XmlSceneLoader.h">
       <Filter>CommonSrc\Render</Filter>
     </ClInclude>
+    <ClInclude Include="OculusWorldDemo.h" />
   </ItemGroup>
 </Project>

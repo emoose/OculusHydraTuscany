@@ -90,7 +90,7 @@
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>OVR_BUILD_DEBUG;WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>C:/ovr_sdk_0.1.5_src/OculusSDK/LibOVR/Include;..\3rdParty\TinyXml;C:/ovr_sdk_0.1.5_src/OculusSDK/LibOVR/Src;C:/ovr_sdk_0.1.5_src/OculusSDK/3rdParty/glext;$(DXSDK_DIR)/Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\3rdParty\SixenseSDK\include;C:/ovr_sdk_0.1.5_src/OculusSDK/LibOVR/Include;..\3rdParty\TinyXml;C:/ovr_sdk_0.1.5_src/OculusSDK/LibOVR/Src;C:/ovr_sdk_0.1.5_src/OculusSDK/3rdParty/glext;$(DXSDK_DIR)/Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>OldStyle</DebugInformationFormat>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <MinimalRebuild>false</MinimalRebuild>
@@ -98,8 +98,8 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>libovrd.lib;dxgi.lib;d3d10.lib;d3d11.lib;d3dcompiler.lib;opengl32.lib;winmm.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>C:/ovr_sdk_0.1.5_src/OculusSDK/LibOVR/Lib/Win32;$(DXSDK_DIR)/Lib/x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>sixensed.lib;sixense_utilsd.lib;libovrd.lib;dxgi.lib;d3d10.lib;d3d11.lib;d3dcompiler.lib;opengl32.lib;winmm.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\3rdParty\SixenseSDK\lib\win32\debug_dll;C:/ovr_sdk_0.1.5_src/OculusSDK/LibOVR/Lib/Win32;$(DXSDK_DIR)/Lib/x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -197,6 +197,7 @@
     <ClInclude Include="..\CommonSrc\Render\Render_D3D1X_Device.h" />
     <ClInclude Include="..\..\3rdParty\TinyXml\tinyxml2.h" />
     <ClInclude Include="..\CommonSrc\Render\Render_XmlSceneLoader.h" />
+    <ClInclude Include="OculusWorldDemo.h" />
     <ClInclude Include="Player.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
