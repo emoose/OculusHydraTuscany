@@ -86,10 +86,8 @@ OculusWorldDemoApp::OculusWorldDemoApp()
     AdjustMessageTimeout = 0;
 	
 	FoundHydra = false;
-	HydraX = HydraY = HydraZ = 0;
-	BaseHydraX = 0;//235.23138f;//165.23138f;
-	BaseHydraY = 0;//793.39111f;
-	BaseHydraZ = 0;//337.62234f;
+	HydraLeftPos = Vector3f(0, 0, 0);
+	BaseHydraLeftPos = Vector3f(0, 0, 0);
 }
 
 OculusWorldDemoApp::~OculusWorldDemoApp()
@@ -827,8 +825,18 @@ void OculusWorldDemoApp::OnIdle()
 			{
 				pad.Buttons = data->buttons;
 				pad.RT = data->trigger;
-				pad.LY = data->joystick_y;
-				pad.LX = data->joystick_x;
+				if(!(data->buttons & SIXENSE_BUTTON_JOYSTICK))
+				{
+					pad.LY = data->joystick_y;
+					pad.LX = data->joystick_x;
+				}
+				else
+				{
+					pad.RY = data->joystick_y;
+					pad.RX = data->joystick_x;
+				}
+
+				ShiftDown = (data->buttons & SIXENSE_BUTTON_BUMPER);
 
 				/*moves camera based on right hydra rotation, buggy and stuff
 				float rot[4];
@@ -862,24 +870,24 @@ void OculusWorldDemoApp::OnIdle()
 		}
 		if(left_index > -1 && sixenseIsControllerEnabled( left_index ))
 		{
-			HydraX = acd.controllers[cont].pos[0];
-			HydraY = acd.controllers[cont].pos[1];
-			HydraZ = acd.controllers[cont].pos[2];
+			HydraLeftPos.x = acd.controllers[cont].pos[0];
+			HydraLeftPos.y = acd.controllers[cont].pos[1];
+			HydraLeftPos.z = acd.controllers[cont].pos[2];
 
 			if(acd.controllers[cont].buttons & SIXENSE_BUTTON_START)
 			{
-				BaseHydraX = HydraX;
-				BaseHydraY = HydraY;
-				BaseHydraZ = HydraZ;
+				BaseHydraLeftPos.x = HydraLeftPos.x;
+				BaseHydraLeftPos.y = HydraLeftPos.y;
+				BaseHydraLeftPos.z = HydraLeftPos.z;
 			}
 
-			HydraX = (int)(HydraX - BaseHydraX);
-			HydraY = (int)(HydraY - BaseHydraY);
-			HydraZ = (int)(HydraZ - BaseHydraZ);
+			HydraLeftPos.x = (int)(HydraLeftPos.x - BaseHydraLeftPos.x);
+			HydraLeftPos.y = (int)(HydraLeftPos.y - BaseHydraLeftPos.y);
+			HydraLeftPos.z = (int)(HydraLeftPos.z - BaseHydraLeftPos.z);
 
-			if(HydraX < HYDRA_DEAD_ZONE && HydraX > -HYDRA_DEAD_ZONE) HydraX = 0;
-			if(HydraY < HYDRA_DEAD_ZONE && HydraY > -HYDRA_DEAD_ZONE) HydraY = 0;
-			if(HydraZ < HYDRA_DEAD_ZONE && HydraZ > -HYDRA_DEAD_ZONE) HydraZ = 0;
+			if(HydraLeftPos.x < HYDRA_DEAD_ZONE && HydraLeftPos.x > -HYDRA_DEAD_ZONE) HydraLeftPos.x = 0;
+			if(HydraLeftPos.y < HYDRA_DEAD_ZONE && HydraLeftPos.y > -HYDRA_DEAD_ZONE) HydraLeftPos.y = 0;
+			if(HydraLeftPos.z < HYDRA_DEAD_ZONE && HydraLeftPos.z > -HYDRA_DEAD_ZONE) HydraLeftPos.z = 0;
 		}
 	}
     // Rotate and position View Camera, using YawPitchRoll in BodyFrame coordinates.
@@ -896,11 +904,11 @@ void OculusWorldDemoApp::OnIdle()
 
     Vector3f eyeCenterInHeadFrame(0.0f, headBaseToEyeHeight, -headBaseToEyeProtrusion);
     
-	Player.AdjustedEyePos = forward * -((HydraZ/1000.f) * 2);
+	Player.AdjustedEyePos = forward * -((HydraLeftPos.z/1000.f) * 2);
 	Player.AdjustedEyePos.y = 0;
 	Player.AdjustedEyePos += Player.EyePos;
-	Player.AdjustedEyePos += UpVector * (HydraY/1000.f);
-	Player.AdjustedEyePos += right * ((HydraX/1000.f)*2);
+	Player.AdjustedEyePos += UpVector * (HydraLeftPos.y/1000.f);
+	Player.AdjustedEyePos += right * ((HydraLeftPos.x/1000.f)*2);
 	
 	Vector3f shiftedEyePos = Player.AdjustedEyePos + rollPitchYaw.Transform(eyeCenterInHeadFrame);
     shiftedEyePos.y -= eyeCenterInHeadFrame.y; // Bring the head back down to original height
@@ -1042,7 +1050,7 @@ void OculusWorldDemoApp::Render(const StereoEyeParams& stereo)
                     " GPU Tex: %u MB \n EyeHeight: %3.2f",
                     RadToDegree(Player.EyeYaw), RadToDegree(Player.EyePitch), RadToDegree(Player.EyeRoll),
                     FPS, FrameCounter, Player.EyePos.x, Player.EyePos.y, Player.EyePos.z, 
-					(HydraX/1000.f), (HydraY/1000.f), (HydraZ/1000.f), 
+					(HydraLeftPos.x/1000.f), (HydraLeftPos.y/1000.f), (HydraLeftPos.z/1000.f), 
 					HydraControlRotation[0], HydraControlRotation[1], HydraControlRotation[2], HydraControlRotation[3],
 					
 					texMemInMB, Player.AdjustedEyePos.y);
