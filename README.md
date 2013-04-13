@@ -3,19 +3,23 @@ OculusHydraTuscany
 
 Oculus Tuscany demo modded to use Razer Hydra for headtracking
 
-To use:
+Usage
+=====
+
 - make sure latest sixense drivers are installed
 - put the hydra base directly in front center of you
 - attach left stick to head somehow
 - once in demo set eyeposition to your height in meters using - and = keys
 - stand up and press start button on right controller
 
-Controls:
+Controls
+========
+
 Left Controller - Headtracking
 
 Right Controller:
-  Bumper - Sprint
-  Joystick - Move
-  Joystick Pressed - Rotate camera
-  Button 1 - Enable/disable headtracking
-  START - Reset standing height
+- Bumper - Sprint
+- Joystick - Move
+- Joystick Pressed - Rotate camera
+- Button 1 - Enable/disable headtracking
+- START - Reset standing height
