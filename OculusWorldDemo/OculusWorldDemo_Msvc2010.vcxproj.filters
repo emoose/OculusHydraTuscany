@@ -35,13 +35,13 @@
       <Filter>CommonSrc\Render</Filter>
     </ClCompile>
     <ClCompile Include="Player.cpp" />
-    <ClCompile Include="..\..\3rdParty\TinyXml\tinyxml2.cpp" />
     <ClCompile Include="..\CommonSrc\Render\Render_LoadTextureDDS.cpp">
       <Filter>CommonSrc\Render</Filter>
     </ClCompile>
     <ClCompile Include="..\CommonSrc\Render\Render_XmlSceneLoader.cpp">
       <Filter>CommonSrc\Render</Filter>
     </ClCompile>
+    <ClCompile Include="..\3rdParty\TinyXml\tinyxml2.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\CommonSrc\Platform\Win32_Platform.h">
