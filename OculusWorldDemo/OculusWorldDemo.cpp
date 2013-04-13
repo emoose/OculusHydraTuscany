@@ -85,7 +85,9 @@ OculusWorldDemoApp::OculusWorldDemoApp()
 
     AdjustMessageTimeout = 0;
 	
+	HydraEnabled = false;
 	FoundHydra = false;
+	Button1Pressed = false;
 	HydraLeftPos = Vector3f(0, 0, 0);
 	BaseHydraLeftPos = Vector3f(0, 0, 0);
 }
@@ -803,91 +805,101 @@ void OculusWorldDemoApp::OnIdle()
             Player.EyePitch = -maxPitch;
         }
     }
-
-	// Sixense stuff
-	int left_index = sixenseUtils::getTheControllerManager()->getIndex( sixenseUtils::ControllerManager::P1L );
-	int right_index = sixenseUtils::getTheControllerManager()->getIndex( sixenseUtils::ControllerManager::P1R );
-
-	int base = 0;
-	int cont =0;
-	for( base=0; base<sixenseGetMaxBases(); base++ )
+	if(FoundHydra)
 	{
-		sixenseSetActiveBase(base);
+		// Sixense stuff
+		int left_index = sixenseUtils::getTheControllerManager()->getIndex( sixenseUtils::ControllerManager::P1L );
+		int right_index = sixenseUtils::getTheControllerManager()->getIndex( sixenseUtils::ControllerManager::P1R );
 
-		// Get the latest controller data
-		sixenseGetAllNewestData( &acd );
-
-		if(right_index > -1 && sixenseIsControllerEnabled( right_index ))
+		int base = 0;
+		int cont =0;
+		bool startpressed = false;
+		for( base=0; base<sixenseGetMaxBases(); base++ )
 		{
-			sixenseControllerData* data = &acd.controllers[right_index];
-			OVR::Platform::GamepadState pad;
-			if(!data->is_docked && !(data->buttons & SIXENSE_BUTTON_1))
+			sixenseSetActiveBase(base);
+
+			// Get the latest controller data
+			sixenseGetAllNewestData( &acd );
+
+			if(right_index > -1 && sixenseIsControllerEnabled( right_index ))
 			{
-				pad.Buttons = data->buttons;
-				pad.RT = data->trigger;
-				if(!(data->buttons & SIXENSE_BUTTON_JOYSTICK))
+				sixenseControllerData* data = &acd.controllers[right_index];
+				OVR::Platform::GamepadState pad;
+				if(!data->is_docked)// && !(data->buttons & SIXENSE_BUTTON_1))
 				{
-					pad.LY = data->joystick_y;
-					pad.LX = data->joystick_x;
-				}
-				else
-				{
-					pad.RY = data->joystick_y;
-					pad.RX = data->joystick_x;
-				}
+					pad.Buttons = data->buttons;
+					pad.RT = data->trigger;
+					if(!(data->buttons & SIXENSE_BUTTON_JOYSTICK))
+					{
+						pad.LY = data->joystick_y;
+						pad.LX = data->joystick_x;
+					}
+					else
+					{
+						pad.RY = data->joystick_y;
+						pad.RX = data->joystick_x;
+					}
 
-				ShiftDown = (data->buttons & SIXENSE_BUTTON_BUMPER);
+					ShiftDown = (data->buttons & SIXENSE_BUTTON_BUMPER);
+					startpressed = (data->buttons & SIXENSE_BUTTON_START);
+					if(data->buttons & SIXENSE_BUTTON_1 && !Button1Pressed)
+					{
+						HydraEnabled = !HydraEnabled;
+						Button1Pressed = true;
+					}
+					else if(!(data->buttons & SIXENSE_BUTTON_1))
+						Button1Pressed = false;
+					/*moves camera based on right hydra rotation, buggy and stuff
+					float rot[4];
+					rot[0] = data->rot_quat[0];
+					rot[1] = data->rot_quat[1];
+					rot[2] = data->rot_quat[2];
+					rot[3] = data->rot_quat[3];
 
-				/*moves camera based on right hydra rotation, buggy and stuff
-				float rot[4];
-				rot[0] = data->rot_quat[0];
-				rot[1] = data->rot_quat[1];
-				rot[2] = data->rot_quat[2];
-				rot[3] = data->rot_quat[3];
+					if(data->buttons & SIXENSE_BUTTON_START)
+					{
+						BaseHydraRotation[0] = rot[0];
+						BaseHydraRotation[1] = rot[1];
+						BaseHydraRotation[2] = rot[2];
+						BaseHydraRotation[3] = rot[3];
+					}
 
-				if(data->buttons & SIXENSE_BUTTON_START)
-				{
-					BaseHydraRotation[0] = rot[0];
-					BaseHydraRotation[1] = rot[1];
-					BaseHydraRotation[2] = rot[2];
-					BaseHydraRotation[3] = rot[3];
-				}
+					rot[0] -= BaseHydraRotation[0];
+					rot[1] -= BaseHydraRotation[1];
+					rot[2] -= BaseHydraRotation[2];
+					rot[3] -= BaseHydraRotation[3];
 
-				rot[0] -= BaseHydraRotation[0];
-				rot[1] -= BaseHydraRotation[1];
-				rot[2] -= BaseHydraRotation[2];
-				rot[3] -= BaseHydraRotation[3];
-
-				pad.RY = -rot[3];// - BaseHydraRotation[3]);
-				pad.RX = -rot[2];//((data->rot_quat[2] > 0 ? 0 - data->rot_quat[2] : data->rot_quat[2]) - BaseHydraRotation[2]);
+					pad.RY = -rot[3];// - BaseHydraRotation[3]);
+					pad.RX = -rot[2];//((data->rot_quat[2] > 0 ? 0 - data->rot_quat[2] : data->rot_quat[2]) - BaseHydraRotation[2]);
 				
-				HydraControlRotation[0] = data->rot_quat[0];
-				HydraControlRotation[1] = data->rot_quat[1];
-				HydraControlRotation[2] = data->rot_quat[2];
-				HydraControlRotation[3] = data->rot_quat[3];*/
+					HydraControlRotation[0] = data->rot_quat[0];
+					HydraControlRotation[1] = data->rot_quat[1];
+					HydraControlRotation[2] = data->rot_quat[2];
+					HydraControlRotation[3] = data->rot_quat[3];*/
+				}
+				OnGamepad(pad);
 			}
-			OnGamepad(pad);
-		}
-		if(left_index > -1 && sixenseIsControllerEnabled( left_index ))
-		{
-			HydraLeftPos.x = acd.controllers[cont].pos[0];
-			HydraLeftPos.y = acd.controllers[cont].pos[1];
-			HydraLeftPos.z = acd.controllers[cont].pos[2];
-
-			if(acd.controllers[cont].buttons & SIXENSE_BUTTON_START)
+			if(left_index > -1 && sixenseIsControllerEnabled( left_index ) && HydraEnabled)
 			{
-				BaseHydraLeftPos.x = HydraLeftPos.x;
-				BaseHydraLeftPos.y = HydraLeftPos.y;
-				BaseHydraLeftPos.z = HydraLeftPos.z;
+				HydraLeftPos.x = acd.controllers[cont].pos[0];
+				HydraLeftPos.y = acd.controllers[cont].pos[1];
+				HydraLeftPos.z = acd.controllers[cont].pos[2];
+
+				if(startpressed)
+				{
+					BaseHydraLeftPos.x = HydraLeftPos.x;
+					BaseHydraLeftPos.y = HydraLeftPos.y;
+					BaseHydraLeftPos.z = HydraLeftPos.z;
+				}
+
+				HydraLeftPos.x = (int)(HydraLeftPos.x - BaseHydraLeftPos.x);
+				HydraLeftPos.y = (int)(HydraLeftPos.y - BaseHydraLeftPos.y);
+				HydraLeftPos.z = (int)(HydraLeftPos.z - BaseHydraLeftPos.z);
+
+				if(HydraLeftPos.x < HYDRA_DEAD_ZONE && HydraLeftPos.x > -HYDRA_DEAD_ZONE) HydraLeftPos.x = 0;
+				if(HydraLeftPos.y < HYDRA_DEAD_ZONE && HydraLeftPos.y > -HYDRA_DEAD_ZONE) HydraLeftPos.y = 0;
+				if(HydraLeftPos.z < HYDRA_DEAD_ZONE && HydraLeftPos.z > -HYDRA_DEAD_ZONE) HydraLeftPos.z = 0;
 			}
-
-			HydraLeftPos.x = (int)(HydraLeftPos.x - BaseHydraLeftPos.x);
-			HydraLeftPos.y = (int)(HydraLeftPos.y - BaseHydraLeftPos.y);
-			HydraLeftPos.z = (int)(HydraLeftPos.z - BaseHydraLeftPos.z);
-
-			if(HydraLeftPos.x < HYDRA_DEAD_ZONE && HydraLeftPos.x > -HYDRA_DEAD_ZONE) HydraLeftPos.x = 0;
-			if(HydraLeftPos.y < HYDRA_DEAD_ZONE && HydraLeftPos.y > -HYDRA_DEAD_ZONE) HydraLeftPos.y = 0;
-			if(HydraLeftPos.z < HYDRA_DEAD_ZONE && HydraLeftPos.z > -HYDRA_DEAD_ZONE) HydraLeftPos.z = 0;
 		}
 	}
     // Rotate and position View Camera, using YawPitchRoll in BodyFrame coordinates.
@@ -904,11 +916,16 @@ void OculusWorldDemoApp::OnIdle()
 
     Vector3f eyeCenterInHeadFrame(0.0f, headBaseToEyeHeight, -headBaseToEyeProtrusion);
     
-	Player.AdjustedEyePos = forward * -((HydraLeftPos.z/1000.f) * 2);
-	Player.AdjustedEyePos.y = 0;
-	Player.AdjustedEyePos += Player.EyePos;
-	Player.AdjustedEyePos += UpVector * (HydraLeftPos.y/1000.f);
-	Player.AdjustedEyePos += right * ((HydraLeftPos.x/1000.f)*2);
+	if(HydraEnabled && FoundHydra)
+	{
+		Player.AdjustedEyePos = forward * -((HydraLeftPos.z/1000.f) * 2);
+		Player.AdjustedEyePos.y = 0;
+		Player.AdjustedEyePos += Player.EyePos;
+		Player.AdjustedEyePos += UpVector * (HydraLeftPos.y/1000.f);
+		Player.AdjustedEyePos += right * ((HydraLeftPos.x/1000.f)*2);
+	}
+	else
+		Player.AdjustedEyePos = Player.EyePos;
 	
 	Vector3f shiftedEyePos = Player.AdjustedEyePos + rollPitchYaw.Transform(eyeCenterInHeadFrame);
     shiftedEyePos.y -= eyeCenterInHeadFrame.y; // Bring the head back down to original height

@@ -169,14 +169,12 @@ protected:
     float               DistortionK1;
     float               DistortionK2;
     float               DistortionK3;
-
+	
+	bool HydraEnabled;
 	bool FoundHydra;
-	float HydraX;
-	float HydraY;
-	float HydraZ;
-	float BaseHydraX;
-	float BaseHydraY;
-	float BaseHydraZ;
+	bool Button1Pressed;
+	Vector3f HydraLeftPos;
+	Vector3f BaseHydraLeftPos;
 
     String              AdjustMessage;
     double              AdjustMessageTimeout;
