@@ -5,10 +5,10 @@ Oculus Tuscany demo modded to use Razer Hydra for headtracking
 
 Install
 =======
-Copy Assets folder from ovr_sdk_0.1.5_src\OculusSDK\Samples\OculusWorldDemo\Assets to OculusWorldDemo\Assets 
-Two options:
-- A (requires VS2010): build/debug
-- B: run the exe in OculusWorldDemo\Release
+
+- Copy Assets folder from ovr_sdk_0.1.5_src\OculusSDK\Samples\OculusWorldDemo\Assets to OculusWorldDemo\Assets
+- (requires VS2010): build solution and debug
+- (doesn't require VS): run the exe in OculusWorldDemo\Release
 
 Usage
 =====
