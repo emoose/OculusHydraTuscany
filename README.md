@@ -1,7 +1,7 @@
 OculusHydraTuscany
 ==================
 
-Oculus Tuscany demo modded to use Razer Hydra for headtracking
+Oculus Rift Tuscany demo modded to use Razer Hydra for headtracking
 
 Install
 =======
