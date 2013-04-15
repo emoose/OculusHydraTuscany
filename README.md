@@ -3,18 +3,25 @@ OculusHydraTuscany
 
 Oculus Tuscany demo modded to use Razer Hydra for headtracking
 
+Install
+=======
+
+Two options:
+- A (requires VS2010): copy Assets folder from ovr_sdk_0.1.5_src\OculusSDK\Samples\OculusWorldDemo\Assets to OculusWorldDemo\Assets and build/debug
+- B: Copy files from OculusWorldDemo\Release into ovr_sdk_0.1.5_src\OculusSDK\Samples\OculusWorldDemo\Release and run the exe
+
 Usage
 =====
 
-- make sure latest sixense drivers are installed
-- put the hydra base directly in front center of you
-- place both controllers on the hydra base unit
+- Make sure latest Sixense drivers are installed
+- Put the hydra base directly in front center of you
+- Place both controllers on the hydra base
 - EXIT SIXENSE MOTIONCREATOR / HYDRA SOFTWARE
-- start the demo
-- set eyeposition to your height in meters using - and = keys
-- attach left controller to head somehow
-- stand up and press start button on right controller
-- duck/jump/run/fly/whatever, and test test test!
+- Start the demo
+- Set eyeposition to your height in meters using - and = keys
+- Attach left controller to head somehow
+- Stand up and press start button on right controller
+- Duck/jump/run/fly/whatever, and test test test!
 
 Controls
 ========
@@ -36,4 +43,5 @@ Keyboard:
 
 Todo
 ====
+
 Test with actual Rift (won't be too long hopefully!)
