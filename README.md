@@ -28,11 +28,11 @@ Right Controller:
 - Button 1 - Enable/disable headtracking
 - START - Reset standing height
 
-F1 - No stereo display
-F2 - Stereo display
-F3 - Stereo display + distortion
-
-SPACE - Stats (HX/RX lines are Hydra info)
+Keyboard:
+- F1 - No stereo display
+- F2 - Stereo display
+- F3 - Stereo display + distortion
+- SPACE - Stats (HX/RX lines are Hydra info)
 
 Todo
 ====
