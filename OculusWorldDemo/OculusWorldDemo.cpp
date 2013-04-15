@@ -812,7 +812,6 @@ void OculusWorldDemoApp::OnIdle()
 		int right_index = sixenseUtils::getTheControllerManager()->getIndex( sixenseUtils::ControllerManager::P1R );
 
 		int base = 0;
-		int cont =0;
 		bool startpressed = false;
 		for( base=0; base<sixenseGetMaxBases(); base++ )
 		{
@@ -881,9 +880,9 @@ void OculusWorldDemoApp::OnIdle()
 			}
 			if(left_index > -1 && sixenseIsControllerEnabled( left_index ) && HydraEnabled)
 			{
-				HydraLeftPos.x = acd.controllers[cont].pos[0];
-				HydraLeftPos.y = acd.controllers[cont].pos[1];
-				HydraLeftPos.z = acd.controllers[cont].pos[2];
+				HydraLeftPos.x = acd.controllers[left_index].pos[0];
+				HydraLeftPos.y = acd.controllers[left_index].pos[1];
+				HydraLeftPos.z = acd.controllers[left_index].pos[2];
 
 				if(startpressed)
 				{
